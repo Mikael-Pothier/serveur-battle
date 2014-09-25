@@ -46,17 +46,10 @@ namespace serveur
                     client2 = null;
                 }
             }
-
-
             ReceiveData(client1);
             ReceiveData(client2);
 
-            while(true)
-            {
-
-            }
             
-
             client1.Close();
             client2.Close();
             sck.Close();
