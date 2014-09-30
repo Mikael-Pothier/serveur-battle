@@ -55,6 +55,7 @@ namespace serveur
                     player2=ReceiveDataBateau(client2);
                     setMatrice(player1, matriceAttaqueJ1);
                     setMatrice(player2, matriceAttaqueJ2);
+
                     attaquer(client1, client2, player2, matriceAttaqueJ2);
                 }
             }
@@ -68,7 +69,7 @@ namespace serveur
             do
             {
                 clientWait.Blocking = true;
-                ReceiveData(clientAttaque, PositionAttaque);
+                PositionAttaque = ReceiveData(clientAttaque);
                 if (estToucher(PositionAttaque, matrice))
                 {
                     PositionAttaque = null;
@@ -216,8 +217,9 @@ namespace serveur
             return joueur;
         }
 
-        private static void ReceiveData(Socket client,position pos)
+        private static position ReceiveData(Socket client)
         {
+            position pos;
             buffer = new byte[client.SendBufferSize];
             int bytesRead = client.Receive(buffer);
             byte[] formatted = new byte[bytesRead];
@@ -230,6 +232,7 @@ namespace serveur
             {
                 pos = receive.Deserialize(recstream) as position;
             }
+            return pos;
         }
 
         //static private void setBateauJoueur(string[] data, Joueur player) { 
