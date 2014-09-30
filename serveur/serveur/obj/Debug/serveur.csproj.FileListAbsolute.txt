@@ -7,3 +7,11 @@ C:\Users\200666155\Documents\GitHub\serveur-battle\serveur\serveur\bin\Debug\Bat
 C:\Users\200666155\Documents\GitHub\serveur-battle\serveur\serveur\obj\Debug\serveur.csprojResolveAssemblyReference.cache
 C:\Users\200666155\Documents\GitHub\serveur-battle\serveur\serveur\obj\Debug\serveur.exe
 C:\Users\200666155\Documents\GitHub\serveur-battle\serveur\serveur\obj\Debug\serveur.pdb
+C:\Users\201240453\Desktop\GitHub\serveur-battle\serveur\serveur\bin\Debug\serveur.exe.config
+C:\Users\201240453\Desktop\GitHub\serveur-battle\serveur\serveur\bin\Debug\serveur.exe
+C:\Users\201240453\Desktop\GitHub\serveur-battle\serveur\serveur\bin\Debug\serveur.pdb
+C:\Users\201240453\Desktop\GitHub\serveur-battle\serveur\serveur\bin\Debug\Bateau.dll
+C:\Users\201240453\Desktop\GitHub\serveur-battle\serveur\serveur\bin\Debug\Bateau.pdb
+C:\Users\201240453\Desktop\GitHub\serveur-battle\serveur\serveur\obj\Debug\serveur.csprojResolveAssemblyReference.cache
+C:\Users\201240453\Desktop\GitHub\serveur-battle\serveur\serveur\obj\Debug\serveur.exe
+C:\Users\201240453\Desktop\GitHub\serveur-battle\serveur\serveur\obj\Debug\serveur.pdb
