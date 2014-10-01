@@ -50,31 +50,56 @@ namespace serveur
 
                 if (SocketConnected(client1) && SocketConnected(client2))
                 {
-                    
+                    sendClient(client1, "La partie est commencee");
+                    sendClient(client2, "La partie est commencee");
                     player1=ReceiveDataBateau(client1);
                     player2=ReceiveDataBateau(client2);
+                    sendClient(client1, "1");
+                    sendClient(client2, "2");
                     setMatrice(player1, matriceAttaqueJ1);
                     setMatrice(player2, matriceAttaqueJ2);
-
-                    attaquer(client1, client2, player2, matriceAttaqueJ2);
+                    while (!aperdu(player1) && !aperdu(player2))
+                    {
+                        jouer();
+                    }
+                    if (aperdu(player1))
+                    {
+                        sendClient(client1, "vous avez perdus");
+                        sendClient(client2, "vous avez gagnes");
+                    }
+                    else
+                    {
+                        sendClient(client2, "vous avez perdus");
+                        sendClient(client1, "vous avez gagnes");                       
+                    }
                 }
             }
             client1.Close();
             client2.Close();
             sck.Close();
         }
-        private static void attaquer(Socket clientAttaque, Socket clientWait,Joueur playerAttaquer, int[,] matrice)
+        private static void jouer()
+        {
+            String text = attaquer(client1, client2, player2, matriceAttaqueJ2);
+            if (!aperdu(player2))
+            {
+                sendClient(client1, text);
+                sendClient(client2, text);
+                text = attaquer(client2, client1, player1, matriceAttaqueJ1);
+            }
+            if (!aperdu(player1) && !aperdu(player2))
+            {
+                sendClient(client1, text);
+                sendClient(client2, text);
+            }        
+        }
+        private static String attaquer(Socket clientAttaque, Socket clientWait,Joueur playerAttaquer, int[,] matrice)
         {
             position PositionAttaque = new position();
             do
             {
                 clientWait.Blocking = true;
                 PositionAttaque = ReceiveData(clientAttaque);
-                if (estToucher(PositionAttaque, matrice))
-                {
-                    PositionAttaque = null;
-                    sendClient(clientAttaque,"attaquer une place valide");
-                }
             } while (PositionAttaque == null);
             int resultat = getResultat(PositionAttaque, matrice);
             setResultat(PositionAttaque, matrice, resultat);
@@ -88,13 +113,12 @@ namespace serveur
                 message = "vous avez manquer la cible";
             }
             String text = resultat + "," + PositionAttaque.x.ToString() + "," + PositionAttaque.y.ToString() + "," + message;
-            sendClient(clientAttaque, text);
-            sendClient(clientWait, text);            
+            return text;           
         }
         private static String BateauTouche(position pos,Joueur player)
         {
             bool trouvé = false;
-            String message = "vous avez touche(e) un bateau";
+            String message = "Bateau touche";
             for (int i = 0;!porteAvionCoule(player) && i < player.PorteAvion.longueur && !trouvé; ++i)
             {
                 if (player.PorteAvion.cases[i].x == pos.x && player.PorteAvion.cases[i].y == pos.y)
@@ -279,6 +303,10 @@ namespace serveur
                 return true;
         }
 
+        private static bool aperdu(Joueur player)
+        {
+            return porteAvionCoule(player) && ContreTorpilleCoule(player) && SousMarinCoule(player) && CroiseurCoule(player) && TorpilleurCoule(player);
+        }
         private static void MatriceJoueur(Joueur player)
         {
             if (player.Nom_ == "player1")
