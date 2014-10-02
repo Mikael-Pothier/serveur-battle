@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using BateauDLL;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+using System.Runtime.Serialization;
 
 namespace serveur
 {
@@ -32,7 +33,7 @@ namespace serveur
             sck = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             sck.Bind(new IPEndPoint(0, 1234));
             sck.Listen(1000);
-
+            
             Console.WriteLine("En attente de connexion");
 
             while(true)
@@ -42,13 +43,12 @@ namespace serveur
                    client1 = sck.Accept();
                    Console.WriteLine("Joueur1 connecté");
                 }
-                if(client2 == null)
+                if(client2 ==null)
                 {
                    client2 = sck.Accept();
                    Console.WriteLine("Joueur2 connecté");
                 }
-
-                if (SocketConnected(client1) && SocketConnected(client2))
+                if (client1 != null && client2 !=null)
                 {
                     sendClient(client1, "La partie est commencee");
                     sendClient(client2, "La partie est commencee");
@@ -58,7 +58,7 @@ namespace serveur
                     sendClient(client2, "2");
                     setMatrice(player1, matriceAttaqueJ1);
                     setMatrice(player2, matriceAttaqueJ2);
-                    while (!aperdu(player1) && !aperdu(player2))
+                    while (!aperdu(player1) && !aperdu(player2) && client1!= null && client2!= null)
                     {
                         jouer();
                     }
@@ -66,28 +66,31 @@ namespace serveur
                     {
                         sendClient(client1, "vous avez perdus");
                         sendClient(client2, "vous avez gagnes");
+                        lire(client1);
+                        lire(client2);
                     }
-                    else
+                    else if(aperdu(player2))
                     {
                         sendClient(client2, "vous avez perdus");
-                        sendClient(client1, "vous avez gagnes");                       
+                        sendClient(client1, "vous avez gagnes");
+                        lire(client1);
+                        lire(client2);                       
                     }
+                    client1 = null;
+                    client2 = null;
                 }
             }
-            client1.Close();
-            client2.Close();
-            sck.Close();
         }
         private static void jouer()
         {
             String text = attaquer(client1, client2, player2, matriceAttaqueJ2);
-            if (!aperdu(player2))
+            if (!aperdu(player2) && client2 !=null)
             {
                 sendClient(client1, text);
                 sendClient(client2, text);
                 text = attaquer(client2, client1, player1, matriceAttaqueJ1);
             }
-            if (!aperdu(player1) && !aperdu(player2))
+            if (!aperdu(player1) && !aperdu(player2) && client1!= null && client2!= null)
             {
                 sendClient(client1, text);
                 sendClient(client2, text);
@@ -99,21 +102,25 @@ namespace serveur
             do
             {
                 clientWait.Blocking = true;
-                PositionAttaque = ReceiveData(clientAttaque);
-            } while (PositionAttaque == null);
-            int resultat = getResultat(PositionAttaque, matrice);
-            setResultat(PositionAttaque, matrice, resultat);
-            String message = "";
-            if (resultat == touche)
+                PositionAttaque = ReceiveData(clientAttaque,clientWait);
+            } while (PositionAttaque == null && client1!= null && client2 != null);
+            if (PositionAttaque != null)
             {
-                message = BateauTouche(PositionAttaque, playerAttaquer);
+                int resultat = getResultat(PositionAttaque, matrice);
+                setResultat(PositionAttaque, matrice, resultat);
+                String message = "";
+                if (resultat == touche)
+                {
+                    message = BateauTouche(PositionAttaque, playerAttaquer);
+                }
+                else
+                {
+                    message = "vous avez manquer la cible";
+                }
+                String text = resultat + "," + PositionAttaque.x.ToString() + "," + PositionAttaque.y.ToString() + "," + message;
+                return text;
             }
-            else
-            {
-                message = "vous avez manquer la cible";
-            }
-            String text = resultat + "," + PositionAttaque.x.ToString() + "," + PositionAttaque.y.ToString() + "," + message;
-            return text;           
+            return "";
         }
         private static String BateauTouche(position pos,Joueur player)
         {
@@ -241,24 +248,59 @@ namespace serveur
             return joueur;
         }
 
-        private static position ReceiveData(Socket client)
+        private static position ReceiveData(Socket client,Socket clientWait)
         {
-            position pos;
+            position pos = null;
             buffer = new byte[client.SendBufferSize];
             int bytesRead = client.Receive(buffer);
             byte[] formatted = new byte[bytesRead];
             BinaryFormatter receive = new BinaryFormatter();
-            for (int i = 0; i < bytesRead; i++)
+            try
             {
-                formatted[i] = buffer[i];
+                for (int i = 0; i < bytesRead; i++)
+                {
+                    formatted[i] = buffer[i];
+                }
+
+                using (var recstream = new MemoryStream(formatted))
+                {
+                    pos = receive.Deserialize(recstream) as position;
+                }
             }
-            using (var recstream = new MemoryStream(formatted))
+            catch(SerializationException serial)
             {
-                pos = receive.Deserialize(recstream) as position;
+                client1 = null;
+                sendClient(clientWait,"L'adversaire est parti");
+                client2 = null;
             }
             return pos;
         }
-
+        private static String lire(Socket client)
+        {
+            String message = null;
+            do
+            {
+                message = recevoirResultat(client);
+            } while (message == null);
+            return message;
+        }
+        private static String recevoirResultat(Socket client)
+        {
+            string strData = "";
+            try
+            {
+                byte[] buff = new byte[client.SendBufferSize];
+                int bytesRead = sck.Receive(buff);
+                byte[] formatted = new byte[bytesRead];
+                for (int i = 0; i < bytesRead; i++)
+                {
+                    formatted[i] = buff[i];
+                }
+                strData = Encoding.ASCII.GetString(formatted);
+            }
+            catch(SocketException sock){}
+            return strData;
+        }
         //static private void setBateauJoueur(string[] data, Joueur player) { 
         //    if(data[0] == player.PorteAvion.nom){
         //        player.PorteAvion.debut.x = int.Parse(data[1]);
