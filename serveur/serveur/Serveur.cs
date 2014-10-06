@@ -87,6 +87,7 @@ namespace serveur
             if (!aperdu(player2) && client2 !=null)
             {
                 sendClient(client1, text);
+
                 sendClient(client2, text);
                 text = attaquer(client2, client1, player1, matriceAttaqueJ1);
             }
@@ -115,7 +116,7 @@ namespace serveur
                 }
                 else
                 {
-                    message = "vous avez manquer la cible";
+                    message = "la cible a ete manquer";
                 }
                 String text = resultat + "," + PositionAttaque.x.ToString() + "," + PositionAttaque.y.ToString() + "," + message;
                 return text;
